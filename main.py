@@ -382,6 +382,7 @@ def pull_all_subnet_location(public_subnets):
 ###########################################
     output = []
     for location in locations:
+        print(f"Location now:: {location}....\n")
         location_dict = {}
         location_list = []
         location_name = str(location["name"])
@@ -418,13 +419,16 @@ def get_public_sectionid_available(location_json, requested_dc, size=29):
 
     #Set Location IDX
     print("This is holder: "+holder)
+    print(f"Global locations: {locations}")
     for idx,location in enumerate(locations):
         print(location["name"])
         if holder == str(location["name"]):
             subset_number = idx    
-
+    print(f"Locations json:: {location_json}\n")
+    print(f"Locations for subset nu:  {location_json[subset_number]}\nSubset number:: {subset_number}")
+    print(f"Holder:: {holder}")
     for subnet in location_json[subset_number]["%s" % (holder)]:
-        print(subnet)
+        print(f"Get public sectionId: {subnet}")   #print(subnet)
         name_holder = subnet["description"]
         expected_string = ("%s Customers" % (requested_dc))
         if expected_string in name_holder:
@@ -470,12 +474,22 @@ def main(user_arg,pswd_arg,location_arg,description_arg,url_arg,appid_arg):
     global locations
     #AKR_IND split into Akron and Independence
     #YNG_NOR split into Youngstown and Northpointe
-    locations = [
+    #Commented out for testing
+    '''locations = [
         { "name": "Marion", "id": "10" }, 
         { "name": "Duluth", "id": "4" },
         { "name": "AKR_IND", "id": "2" },
         { "name": "Canton", "id": "12" },
         { "name": "Boise", "id": "5" },
+        { "name": "Tucson", "id": "6" },
+        { "name": "YNG_NOR", "id": "3" }
+    ]'''
+    locations = [
+        { "name": "Marion", "id": "10" }, 
+        { "name": "Duluth", "id": "4" },
+        { "name": "AKR_IND", "id": "2" },
+        { "name": "Canton", "id": "12" },
+        { "name": "Boise", "id": "1" },
         { "name": "Tucson", "id": "6" },
         { "name": "YNG_NOR", "id": "3" }
     ]
@@ -504,15 +518,19 @@ def main(user_arg,pswd_arg,location_arg,description_arg,url_arg,appid_arg):
 #find the first available /29 in the subnet with id == 52
 ###########################################
     all_sections = phpipam.sections_get_all()
+    print(f"All Sections:: {all_sections}\n")
     for section in all_sections:
         print(section["name"])
+        #Commenting the section name for testing
         if "IPv4 Public" == section["name"]:
+        #if "Customers" == section["name"]:     #Revert it back after testing
             public_section_id = section["id"]
 
     #all subnet info contains non filtered data
     all_subnet_info = phpipam.sections_get_subnets(public_section_id)
     #public_subnets contains all subnets (filtered data points) under the IPv4 Public section
     public_subnets = get_real_subnets(public_section_id)
+    print(f"Public subnets:: {public_subnets}\n")
     #location_json contains <location>: {}, <location2>: {}...
     location_json = pull_all_subnet_location(public_subnets)
     available_29_id, top_customer_subnet_id = get_public_sectionid_available(location_json, location_worker)
@@ -522,6 +540,7 @@ def main(user_arg,pswd_arg,location_arg,description_arg,url_arg,appid_arg):
     with open('ALL.json', 'w') as stream:
         stream.write(json.dumps(location_json))
     if "no /29 available" not in available_29_id:
+        print(f"inside no /29:: {available_29_id}")
         first_avail = available_29_id
         first_avail_id = None
         print("Top customer ID: " + top_customer_subnet_id)
@@ -561,5 +580,5 @@ def main(user_arg,pswd_arg,location_arg,description_arg,url_arg,appid_arg):
     return ("firstAvail:"+first_avail, "vipGateway:"+vip_gateway, "vrrp1:"+vrrp_1, "vrrp2:"+vrrp_2, "paloIP:"+palo_ip, "custFirst:"+customer_first, "custLast:"+customer_last, "cidr:"+cidr_test, "mask:"+mask_test)
 
 if __name__ == '__main__':
+    #main("admin","Elastic+123","Boise","testDesc","https://172.16.22.168/phpipam","test")
     main(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],sys.argv[6])
-
